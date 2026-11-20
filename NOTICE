@@ -1,0 +1,18 @@
+SimpleAgentSignalVerify
+Copyright (c) 2026 redcool
+
+This product includes ideas and code adapted from third-party projects
+licensed under the MIT License:
+
+1. lovisdotio/video-to-game
+   https://github.com/lovisdotio/video-to-game
+   MIT License
+   Used for: contact-sheet and side-by-side comparison approach,
+   take-window ranking, palette statistics methodology.
+
+2. visual-taste / audio-taste agent skills (derived from the above)
+   Used for: metric definitions and threshold profiles
+   (saturation, palette concentration, contrast, tonal zones,
+   edge density, LUFS, true peak, silence ratio, loop seam).
+
+All adapted code retains this attribution. The original files' MIT terms apply.
