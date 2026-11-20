@@ -10,7 +10,7 @@ class Report(dict):
     约定：limitations 必须非空——没有局限的工具是不存在的，写空说明没想清楚。
     """
 
-    def __init__(self, tool, version="0.1.0"):
+    def __init__(self, tool, version="0.0.1"):
         super().__init__({
             "tool": tool,
             "version": version,

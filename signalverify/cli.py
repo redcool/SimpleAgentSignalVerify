@@ -1,6 +1,11 @@
-"""sv —— 命令行入口。每个子命令都能 --json 落盘。"""
+"""signalverify —— 命令行入口。每个子命令都能 --json 落盘。
+
+说明：stdout 只输出 JSON 产物（这是交付物，不是日志）；
+诊断信息一律走 logging，遵循"生产环境禁止用 print 打日志"的纪律。
+"""
 import argparse
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -9,12 +14,15 @@ from pathlib import Path
 from .core.ffmpeg import probe, ffmpeg_available
 from .core.report import Report, write_report
 from .audio import read_wav_mono, envelope
+
+LOGGER = logging.getLogger("signalverify")
 from .audio.lyric_timing import parse_lyrics, asr_char_times, build_timing, build_segments
 from .audio.lip_offset import lip_offset
 from .visual.frame_sheet import build_frame_sheet
 
 
 def _emit(report, json_path):
+    """把报告打到 stdout；--json 时同时落盘。"""
     text = json.dumps(report, ensure_ascii=False, indent=2)
     if json_path:
         write_report(report, json_path)
@@ -137,7 +145,8 @@ def cmd_lyric_segments(a):
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(prog="sv", description="SimpleAgentSignalVerify")
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    p = argparse.ArgumentParser(prog="signalverify", description="SimpleAgentSignalVerify")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("lip-offset", help="口型偏移与相关度")
@@ -187,7 +196,7 @@ def main(argv=None):
 
     a = p.parse_args(argv)
     if not ffmpeg_available():
-        print("warning: ffmpeg/ffprobe not found on PATH", file=sys.stderr)
+        LOGGER.warning("ffmpeg/ffprobe not found on PATH")
     a.func(a)
 
 
