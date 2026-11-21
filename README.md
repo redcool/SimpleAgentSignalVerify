@@ -43,6 +43,9 @@ sv lip-offset --video take.mp4 --audio ref.wav --json out.json
 
 # 视觉：按时间码拼联络单（给视觉模型或人看）
 sv frame-sheet --video take.mp4 --count 12 --cols 4 --out sheet.png
+
+# 视觉：面相"王"字格量化（评审用，不要写进生成提示词）
+sv face-grid --image face1.png face2.png --json face_grid.json
 ```
 
 ## 目录

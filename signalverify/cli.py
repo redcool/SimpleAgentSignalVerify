@@ -19,6 +19,7 @@ LOGGER = logging.getLogger("signalverify")
 from .audio.lyric_timing import parse_lyrics, asr_char_times, build_timing, build_segments
 from .audio.lip_offset import lip_offset
 from .visual.frame_sheet import build_frame_sheet
+from .visual.face_grid import measure as measure_face_grid, to_dict as face_grid_to_dict
 
 
 def _emit(report, json_path):
@@ -52,6 +53,27 @@ def cmd_frame_sheet(a):
     for k, v in info.items():
         rep.result(k, v)
     rep.limitation("时间码是请求时间，实际帧可能偏一帧，不要在 ±0.05s 上做文章。")
+    _emit(rep, a.json)
+
+
+def cmd_face_grid(a):
+    """面相'王'字格量化：量三条水平线与中线有多方正。只用于评审，不用于生成。"""
+    paths = a.image if isinstance(a.image, list) else [a.image]
+    rows = []
+    for p in paths:
+        try:
+            rows.append({"image": str(p), **face_grid_to_dict(measure_face_grid(p))})
+        except Exception as exc:
+            rows.append({"image": str(p), "error": str(exc)})
+    rep = Report("face-grid").method(
+        "Haar 正脸+人眼检测求眼线角；下半脸暗带求唇线角；左右半脸差求对称度；综合为方正度 0-10"
+    )
+    for p in paths:
+        rep.input("image", p)
+    rep.result("rows", rows)
+    rep.limitation("Haar 级联对侧脸/低头/遮挡会丢检测；没有关键点模型，中线与嘴角是估计值。")
+    rep.limitation("目测与测量在 2 度以内不可分辨，不要拿小数点论输赢。")
+    rep.limitation("此分数只用于评审打分，不要写进生成提示词——实测会把脸压成证件照。")
     _emit(rep, a.json)
 
 
@@ -165,6 +187,11 @@ def main(argv=None):
     s.add_argument("--tile-width", type=int, default=480)
     s.add_argument("--json")
     s.set_defaults(func=cmd_frame_sheet)
+
+    s = sub.add_parser("face-grid", help="面相王字格量化（评审用）")
+    s.add_argument("--image", required=True, nargs="+")
+    s.add_argument("--json")
+    s.set_defaults(func=cmd_face_grid)
 
     s = sub.add_parser("probe", help="读容器/流信息")
     s.add_argument("--path", required=True)
