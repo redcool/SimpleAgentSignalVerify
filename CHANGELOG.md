@@ -14,6 +14,14 @@ w 小版本     CRUD / 修正，agent 可操作
 
 ---
 
+## 0.0.1.3 — 2026-11-21
+
+- **补上 `skills/` 目录**。此前 README 的目录树里写了 `skills/`，但仓库里根本不存在——
+  这是文档与实际不一致，用户追问才发现。现在按"薄壳"补齐 4 个技能：
+  `audio-lyric-timing` / `video-lip-sync` / `image-face-grid` / `frame-sheet`，
+  外加 `skills/README.md` 索引。
+- README 目录树改为与实际一致，并写明"库负责算、skills 负责教"。
+
 ## 0.0.1.2 — 2026-11-21
 
 - 新增 `sv face-grid`：面相"王"字格量化（眼线角、唇线角、两线夹角、左右受光差、半脸对称度、方正度 0–10）。

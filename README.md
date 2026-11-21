@@ -51,13 +51,17 @@ sv face-grid --image face1.png face2.png --json face_grid.json
 ## 目录
 
 ```
-signalverify/
-  core/      ffmpeg 调用、时间基准、JSON 报告
-  audio/     歌词时间码、口型对齐、包络
-  visual/    抽帧联络单、帧指标、对比
-skills/      面向 agent 的 SKILL.md 薄壳（只调 CLI）
-tests/       确定性单测（不依赖模型）
+signalverify/   库：能 import、能测试，实现只有这一份
+  core/         ffmpeg 调用、时间基准、统一报告信封
+  audio/        歌词时间码、口型对齐、WAV/包络
+  visual/       抽帧联络单、面相王字格量化
+skills/         面向 agent 的 SKILL.md 薄壳（只写用法与局限，不放脚本）
+  audio-lyric-timing/  video-lip-sync/  image-face-grid/  frame-sheet/
+tests/          确定性单测（零依赖运行器，装了 pytest 也能跑）
+docs/           工程纪律对照
 ```
+
+> **库负责算，skills 负责教怎么用。** 技能里禁止复制脚本——复制就会漂。
 
 ## 出处
 
