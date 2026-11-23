@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "signalverify"
-version = "0.0.1.4"
+version = "0.0.1.5"
 description = "Deterministic signal verification for agents: lip-sync offset, lyric timing, contact sheets."
 readme = "README.md"
 requires-python = ">=3.10"
