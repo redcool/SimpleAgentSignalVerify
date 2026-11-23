@@ -14,6 +14,17 @@ w 小版本     CRUD / 修正，agent 可操作
 
 ---
 
+## 0.0.1.4 — 2026-11-21（分层重构：能力层收口）
+
+- **新增 `sv audio-slice`**（采样精确切块）：MP3 一次解码为 48k/16bit/mono PCM 母版，
+  按整数采样下标切片，**重组必须与母版逐字节一致**。来自 VideoPrj 的 `audio_slice_exact.py`，
+  现为唯一实现。真实素材验证：《浮沉歌》50 块（2×8s + 48×5s = 256s），
+  `continuous_matches_master = true`，解码 12,288,000 采样。
+- **新增 `sv grain` / `sv grain-metrics`**：来自 VideoPrj 的 `film_grain.py` + `grain_metrics.py`。
+- **`skills/` 改名 `docs/cli/`**：让 "skills" 这个词只属于 VideoPrj。
+- 测试从 7 条增到 **11 条**。
+- 依赖方向确立：**VideoPrj → SignalVerify，单向**。
+
 ## 0.0.1.3 — 2026-11-21
 
 - **补上 `skills/` 目录**。此前 README 的目录树里写了 `skills/`，但仓库里根本不存在——

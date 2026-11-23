@@ -10,7 +10,7 @@ class Report(dict):
     约定：limitations 必须非空——没有局限的工具是不存在的，写空说明没想清楚。
     """
 
-    def __init__(self, tool, version="0.0.1"):
+    def __init__(self, tool, version="0.0.1.4"):
         super().__init__({
             "tool": tool,
             "version": version,
@@ -42,3 +42,4 @@ def write_report(report, path):
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     return p
+

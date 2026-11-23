@@ -20,6 +20,8 @@ from .audio.lyric_timing import parse_lyrics, asr_char_times, build_timing, buil
 from .audio.lip_offset import lip_offset
 from .visual.frame_sheet import build_frame_sheet
 from .visual.face_grid import measure as measure_face_grid, to_dict as face_grid_to_dict
+from .audio.audio_slice import slice_audio
+from .finishing.grain import apply_grain, grain_metrics
 
 
 def _emit(report, json_path):
@@ -53,6 +55,48 @@ def cmd_frame_sheet(a):
     for k, v in info.items():
         rep.result(k, v)
     rep.limitation("时间码是请求时间，实际帧可能偏一帧，不要在 ±0.05s 上做文章。")
+    _emit(rep, a.json)
+
+
+def cmd_audio_slice(a):
+    """采样精确切块：一次解码为 PCM 母版，按整数采样点切，重组必须与母版逐采样一致。"""
+    report = slice_audio(a.audio, a.plan, a.out)
+    rep = Report("audio-slice").method(
+        "MP3 一次性解码为 48k/16bit/mono PCM 母版；按整数采样下标切片；切块重组与母版逐字节比对"
+    ).input("audio", a.audio).input("plan", a.plan)
+    rep.result("slices", len(report["slices"]))
+    rep.result("decoded_samples", report["decoded_samples"])
+    rep.result("continuous_matches_master", report["continuous_matches_master"])
+    rep.result("manifest", str(Path(a.out) / "manifest.json"))
+    rep.result("detail", report["slices"])
+    rep.limitation("计划必须连续无缝（前段 end_sample == 后段 start_sample），不连续会被拒绝。")
+    rep.limitation("母版固定 48kHz/16bit/mono；需要立体声或多码率的场景需另开参数。")
+    rep.limitation("preroll 只为模型 guide 生成，不能混进最终音频。")
+    _emit(rep, a.json)
+
+
+def cmd_grain(a):
+    info = apply_grain(a.input, a.output, strength=a.strength, mode=a.mode,
+                       contrast=a.contrast, saturation=a.saturation, vignette=a.vignette,
+                       sharpen=a.sharpen, crf=a.crf, preset=a.preset, audio_path=a.audio)
+    rep = Report("grain").method("ffmpeg noise/eq/vignette/unsharp + libx264 -tune grain")
+    rep.input("input", a.input)
+    for key, value in info.items():
+        rep.result(key, value)
+    rep.limitation("颗粒会显著降低压缩效率；不调 CRF 会要么压没、要么码率爆。")
+    rep.limitation("暗角与对比会拉低整帧方差，验证颗粒请看 grain-metrics，不要看整帧统计。")
+    _emit(rep, a.json)
+
+
+def cmd_grain_metrics(a):
+    rows = grain_metrics(*a.video)
+    rep = Report("grain-metrics").method(
+        "中心裁剪（避开暗角）的拉普拉斯方差 + 相邻帧中心区平均绝对差"
+    )
+    for path in a.video:
+        rep.input("video", path)
+    rep.result("rows", rows)
+    rep.limitation("只是统计量，不等于'更像胶片'；观感仍需人看。")
     _emit(rep, a.json)
 
 
@@ -187,6 +231,33 @@ def main(argv=None):
     s.add_argument("--tile-width", type=int, default=480)
     s.add_argument("--json")
     s.set_defaults(func=cmd_frame_sheet)
+
+    s = sub.add_parser("audio-slice", help="采样精确音频切块（PCM 母版 + 整数采样下标）")
+    s.add_argument("--audio", required=True)
+    s.add_argument("--plan", required=True, help='计划格式：{"shots":[{"id","start","duration"}]}')
+    s.add_argument("--out", required=True)
+    s.add_argument("--json")
+    s.set_defaults(func=cmd_audio_slice)
+
+    s = sub.add_parser("grain", help="收尾处理：颗粒/对比/暗角")
+    s.add_argument("--input", required=True)
+    s.add_argument("--output", required=True)
+    s.add_argument("--strength", type=int, default=7)
+    s.add_argument("--mode", default="t+u")
+    s.add_argument("--contrast", type=float, default=1.0)
+    s.add_argument("--saturation", type=float, default=1.0)
+    s.add_argument("--vignette", type=float, default=0.0)
+    s.add_argument("--sharpen", type=float, default=0.0)
+    s.add_argument("--crf", type=int, default=18)
+    s.add_argument("--preset", default="slow")
+    s.add_argument("--audio", help="替换音轨")
+    s.add_argument("--json")
+    s.set_defaults(func=cmd_grain)
+
+    s = sub.add_parser("grain-metrics", help="量颗粒加上没有")
+    s.add_argument("--video", required=True, nargs="+")
+    s.add_argument("--json")
+    s.set_defaults(func=cmd_grain_metrics)
 
     s = sub.add_parser("face-grid", help="面相王字格量化（评审用）")
     s.add_argument("--image", required=True, nargs="+")
